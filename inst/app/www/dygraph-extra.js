@@ -14,8 +14,6 @@
             return;
         }
 
-        // ---- Begin original modified dygraph-extra.js content ----
-
         Dygraph.Export = {};
 
         Dygraph.Export.DEFAULT_ATTRS = {
