@@ -26,7 +26,9 @@ golem::add_module(name = "global", with_test = FALSE) # Name of the module
 ## Add helper functions ----
 ## Creates fct_* and utils_*
 golem::add_fct("helpers", with_test = FALSE)
+golem::add_fct("import", with_test = FALSE)
 golem::add_utils("helpers", with_test = FALSE)
+golem::add_utils("words", with_test = FALSE)
 
 ## External resources
 ## Creates .js and .css files at inst/app/www
