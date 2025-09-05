@@ -9,9 +9,10 @@ app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources(),
     # Your application UI logic
-    tags$head(HTML()),
-
-    bslib::page_fluid()
+    #tags$head(HTML()),
+    bslib::page_fluid(
+      mod_global_ui("global_1"),
+    )
   )
 }
 

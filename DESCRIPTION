@@ -10,8 +10,12 @@ Description: Visualize and download data and graphs from the Old Town
 License: What license is it under?
 Imports: 
     config,
+    dplyr,
     golem,
-    shiny
+    lubridate,
+    readr,
+    shiny,
+    zeallot
 Suggests: 
     spelling,
     testthat (>= 3.0.0)

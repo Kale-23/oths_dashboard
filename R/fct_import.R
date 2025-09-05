@@ -1,33 +1,33 @@
-#' import
+#' import_data
 #'
 #' @description A fct function
 #'
 #' @return The return value, if any, from executing the function.
 #'
 #' @noRd
-import_bound <- function() {
-  common = "~/Desktop/Soil_Work/OTHS\ Shiny\ App\ 2.0/"
-  #common = "https://hbrsensor.sr.unh.edu/data/snownet/"
+import_data <- function() {
+  #common = "~/Desktop/Soil_Work/OTHS\ Shiny\ App\ 2.0/"
+  common = "https://hbrsensor.sr.unh.edu/data/snownet/"
 
   # get column names
-  col_names = colnames(read_csv(
+  col_names <- colnames(readr::read_csv(
     paste0(common, "OTHSHW_SOIL_MET.dat"),
     n_max = 0,
     skip = 1
   ))
 
   # current dynamic files
-  hw <- import_individual(paste0(common, "OTHSHW_SOIL_MET.dat"), "HW")
-  sw <- import_individual(paste0(common, "OTHSSW_SOIL_MET.dat"), "SW")
+  hw <- import_individual(paste0(common, "OTHSHW_SOIL_MET.dat"), "HW", col_names)
+  sw <- import_individual(paste0(common, "OTHSSW_SOIL_MET.dat"), "SW", col_names)
 
   # old pre ardiuno
-  hw_old <- import_individual(paste0(common, "OTHSHW_SOIL_MET.dat.backup"), "HW")
-  sw_old <- import_individual(paste0(common, "OTHSSW_SOIL_MET.dat.backup"), "SW")
+  hw_old <- import_individual(paste0(common, "OTHSHW_SOIL_MET.dat.backup"), "HW", col_names)
+  sw_old <- import_individual(paste0(common, "OTHSSW_SOIL_MET.dat.backup"), "SW", col_names)
 
-  ot <- bind_rows(hw, hw_old, sw, sw_old)
+  ot <- dplyr::bind_rows(hw, hw_old, sw, sw_old)
   rm(hw, sw, hw_old, sw_old, col_names, common)
   ot <- ot |>
-    mutate(
+    dplyr::mutate(
       DateTime = TIMESTAMP,
       Year = year(DateTime),
       Month = month(DateTime),
@@ -37,7 +37,7 @@ import_bound <- function() {
 
   # quality control (TRUE = good, FALSE = bad)
   ot <- ot |>
-    mutate(
+    dplyr::mutate(
       batt_flag = if_else(batt_volt_Min >= 12, TRUE, FALSE),
       # air temp
       airT_flag = if_else(
@@ -139,7 +139,7 @@ import_bound <- function() {
 
   # create corr columns
   ot <- ot |>
-    mutate(
+    dplyr::mutate(
       AirT_corr = if_else(airT_flag, AirT, NA_real_),
       RH_corr = if_else(RH_flag, RH, NA_real_),
       TCDT_corr = if_else(TCDT_flag & Q_flag, TCDT, NA_real_),
@@ -161,7 +161,7 @@ import_bound <- function() {
   # height varies over time as boom was adjusted
   # multiply by 100 to get units in cm
   ot <- ot |>
-    mutate(
+    dplyr::mutate(
       SD = case_when(
         Site == "HW" & DateTime < as.POSIXct("2019-11-15") ~ (1.81 - TCDT_corr) * 100, # min
         Site == "HW" & DateTime >= as.POSIXct("2019-11-15") & DateTime < as.POSIXct("2020-04-01") ~
@@ -184,15 +184,15 @@ import_bound <- function() {
   #ot <- ot |>
   #  left_join(calibration, by = "Site") |>
   #  filter(DateTime >= start & DateTime < end) |>
-  #  mutate(SD = (coef - TCDT_corr) * 100) |>
-  #  select(-start, -end, -coef)
+  #  dplyr::mutate(SD = (coef - TCDT_corr) * 100) |>
+  #  dplyr::select(-start, -end, -coef)
   #rm(calibration)
 
   # make values that were below zero or outside of period of snowpack
   # occurrence (determined by Ed Lindsey and OTHS students
   # see link: https://docs.google.com/spreadsheets/d/1A-dZsYg5leZ4hKduwx23xjWYmg7BKPQFQ0pEczrk3Rs/edit#gid=1196535705)
   ot <- ot |>
-    mutate(
+    dplyr::mutate(
       SnowDepth = case_when(
         Site == "HW" & DateTime > as.POSIXct("2019-04-16") & DateTime < as.POSIXct("2019-11-13") ~ 0,
         Site == "HW" & DateTime > as.POSIXct("2020-04-15") & DateTime < as.POSIXct("2020-12-07") ~ 0,
@@ -208,7 +208,7 @@ import_bound <- function() {
 
   # adjust
   ot <- ot |>
-    mutate(
+    dplyr::mutate(
       #subtract snow sensor height from ARD_DT_corr to get snow depth#
       #height is 1920 in HW and 1937 in SW
       #divide by 10 to get units in cm
@@ -236,34 +236,45 @@ import_bound <- function() {
     )
 
   ot <- ot |>
-    select(all_of(import_names())) |>
-    rename_with(~ import_renames(), .cols = all_of(import_names()))
+    dplyr::select(all_of(import_names())) |>
+    dplyr::rename_with(~ import_renames(), .cols = all_of(import_names()))
 
   #TODO reimplement this
   #goog = read_sheet(
   #  "https://docs.google.com/spreadsheets/d/1A-dZsYg5leZ4hKduwx23xjWYmg7BKPQFQ0pEczrk3Rs/edit#gid=1196535705"
   #)
 
-  google_df <- read_csv("~/Desktop/field_data_responses.csv") |>
-    mutate(
+  google_df <- readr::read_csv("~/Desktop/field_data_responses.csv") |>
+    dplyr::mutate(
       DateTime = round(as.POSIXct(Timestamp, format = "%m/%d/%Y %H:%M", tz = "EST"), "hours"), # round time to nearest hour
       site = Neighborhood,
       fdep = `Average Whole Site FROST depth (mm)` / 10,
       swe = `SWE (inches of water after snow sample melts)` * 25,
       sdep = `Average Whole Site SNOW depth (cm)` * 10
     ) |>
-    select(DateTime, site, fdep, swe, sdep)
+    dplyr::select(DateTime, site, fdep, swe, sdep)
 
   combined <- ot |>
-    full_join(google_df, by = c("DateTime" = "DateTime", "Site" = "site"))
+    dplyr::full_join(google_df, by = c("DateTime" = "DateTime", "Site" = "site"))
+  rm(ot, google_df)
+
+  #TODO change to updating files when available
+  hwpheno = readr::read_csv("http://hbrsensor.sr.unh.edu/data/snownet/shiny_othshw.csv") |>
+    dplyr::mutate(site = "HW") |>
+    dplyr::select(date, midday_gcc, site)
+
+  swpheno = readr::read_csv("http://hbrsensor.sr.unh.edu/data/snownet/shiny_othssw.csv") |>
+    dplyr::mutate(site = "SW") |>
+    dplyr::select(date, midday_gcc, site)
+
+  pheno = dplyr::bind_rows(hwpheno, swpheno)
+  rm(hwpheno, swpheno)
 
   #write_csv(ot, "~/Desktop/ot_old.csv")
-
-  #ot_1 <- read_csv("~/Desktop/ot_old.csv") |> mutate(Site = as.factor(Site))
-  #ot_2 <- read_csv("~/Desktop/ot_oldest.csv") |> select(-1) |> mutate(Site = as.factor(Site))
-
+  #ot_1 <- readr::read_csv("~/Desktop/ot_old.csv") |> dplyr::mutate(Site = as.factor(Site))
+  #ot_2 <- readr::read_csv("~/Desktop/ot_oldest.csv") |> dplyr::select(-1) |> dplyr::mutate(Site = as.factor(Site))
   #full_explore_output(ot_1, "~/Desktop/ot_1.pdf")
   #full_explore_output(ot_2, "~/Desktop/ot_2.pdf")
 
-  return(combined)
+  return(list(combined, pheno))
 }
