@@ -19,6 +19,7 @@ import_names <- function() {
   c(
     "Site",
     "DateTime",
+    "date",
     "Year",
     "Month",
     "Day",
@@ -46,6 +47,7 @@ import_renames <- function() {
   c(
     "Site",
     "DateTime",
+    "date",
     "Year",
     "Month",
     "Day",
