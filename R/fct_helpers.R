@@ -18,7 +18,7 @@ import_individual <- function(path, site) {
 import_names <- function() {
   c(
     "Site",
-    "Datetime",
+    "DateTime",
     "Year",
     "Month",
     "Day",
@@ -45,7 +45,7 @@ import_names <- function() {
 import_renames <- function() {
   c(
     "Site",
-    "Datetime",
+    "DateTime",
     "Year",
     "Month",
     "Day",

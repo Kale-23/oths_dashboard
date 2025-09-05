@@ -28,11 +28,11 @@ import_bound <- function() {
   rm(hw, sw, hw_old, sw_old, col_names, common)
   ot <- ot |>
     mutate(
-      Datetime = TIMESTAMP,
-      Year = year(Datetime),
-      Month = month(Datetime),
-      Day = day(Datetime),
-      Hour = hour(Datetime),
+      DateTime = TIMESTAMP,
+      Year = year(DateTime),
+      Month = month(DateTime),
+      Day = day(DateTime),
+      Hour = hour(DateTime),
     )
 
   # quality control (TRUE = good, FALSE = bad)
@@ -163,12 +163,12 @@ import_bound <- function() {
   ot <- ot |>
     mutate(
       SD = case_when(
-        Site == "HW" & Datetime < as.POSIXct("2019-11-15") ~ (1.81 - TCDT_corr) * 100, # min
-        Site == "HW" & Datetime >= as.POSIXct("2019-11-15") & Datetime < as.POSIXct("2020-04-01") ~
+        Site == "HW" & DateTime < as.POSIXct("2019-11-15") ~ (1.81 - TCDT_corr) * 100, # min
+        Site == "HW" & DateTime >= as.POSIXct("2019-11-15") & DateTime < as.POSIXct("2020-04-01") ~
           (1.80 - TCDT_corr) * 100,
-        Site == "HW" & Datetime >= as.POSIXct("2020-04-01") ~ (1.84 - TCDT_corr) * 100, # max
-        Site == "SW" & Datetime < as.POSIXct("2020-04-01") ~ (1.84 - TCDT_corr) * 100, # min
-        Site == "SW" & Datetime >= as.POSIXct("2020-04-01") ~ (1.88 - TCDT_corr) * 100 # max
+        Site == "HW" & DateTime >= as.POSIXct("2020-04-01") ~ (1.84 - TCDT_corr) * 100, # max
+        Site == "SW" & DateTime < as.POSIXct("2020-04-01") ~ (1.84 - TCDT_corr) * 100, # min
+        Site == "SW" & DateTime >= as.POSIXct("2020-04-01") ~ (1.88 - TCDT_corr) * 100 # max
       )
     )
   # fmt: skip
@@ -183,7 +183,7 @@ import_bound <- function() {
 
   #ot <- ot |>
   #  left_join(calibration, by = "Site") |>
-  #  filter(Datetime >= start & Datetime < end) |>
+  #  filter(DateTime >= start & DateTime < end) |>
   #  mutate(SD = (coef - TCDT_corr) * 100) |>
   #  select(-start, -end, -coef)
   #rm(calibration)
@@ -194,14 +194,14 @@ import_bound <- function() {
   ot <- ot |>
     mutate(
       SnowDepth = case_when(
-        Site == "HW" & Datetime > as.POSIXct("2019-04-16") & Datetime < as.POSIXct("2019-11-13") ~ 0,
-        Site == "HW" & Datetime > as.POSIXct("2020-04-15") & Datetime < as.POSIXct("2020-12-07") ~ 0,
-        Site == "HW" & Datetime > as.POSIXct("2021-03-28") & Datetime < as.POSIXct("2021-11-28") ~ 0,
-        Site == "HW" & Datetime > as.POSIXct("2022-03-30") ~ 0,
-        Site == "SW" & Datetime > as.POSIXct("2019-04-17") & Datetime < as.POSIXct("2019-11-13") ~ 0,
-        Site == "SW" & Datetime > as.POSIXct("2020-04-15") & Datetime < as.POSIXct("2020-12-07") ~ 0,
-        Site == "SW" & Datetime > as.POSIXct("2021-03-22") & Datetime < as.POSIXct("2021-11-28") ~ 0,
-        Site == "SW" & Datetime > as.POSIXct("2022-03-30") ~ if_else(SD < 0, 0, SD),
+        Site == "HW" & DateTime > as.POSIXct("2019-04-16") & DateTime < as.POSIXct("2019-11-13") ~ 0,
+        Site == "HW" & DateTime > as.POSIXct("2020-04-15") & DateTime < as.POSIXct("2020-12-07") ~ 0,
+        Site == "HW" & DateTime > as.POSIXct("2021-03-28") & DateTime < as.POSIXct("2021-11-28") ~ 0,
+        Site == "HW" & DateTime > as.POSIXct("2022-03-30") ~ 0,
+        Site == "SW" & DateTime > as.POSIXct("2019-04-17") & DateTime < as.POSIXct("2019-11-13") ~ 0,
+        Site == "SW" & DateTime > as.POSIXct("2020-04-15") & DateTime < as.POSIXct("2020-12-07") ~ 0,
+        Site == "SW" & DateTime > as.POSIXct("2021-03-22") & DateTime < as.POSIXct("2021-11-28") ~ 0,
+        Site == "SW" & DateTime > as.POSIXct("2022-03-30") ~ if_else(SD < 0, 0, SD),
         .default = if_else(SD < 0, 0, SD)
       )
     )
@@ -221,9 +221,8 @@ import_bound <- function() {
       #occurrence (determined by Ed Lindsey and OTHS students
       #see link: https://docs.google.com/spreadsheets/d/1A-dZsYg5leZ4hKduwx23xjWYmg7BKPQFQ0pEczrk3Rs/edit#gid=1196535705)
       ARD_SnowDepth = case_when(
-        Datetime > as.POSIXct("2021-03-22") & Datetime < as.POSIXct("2021-11-28") ~ 0,
-        Datetime < as.POSIXct("2021-11-28") ~ 0,
-        Datetime > as.POSIXct("2022-03-30") ~ 0,
+        DateTime > as.POSIXct("2021-03-22") & DateTime < as.POSIXct("2021-11-28") ~ 0,
+        DateTime > as.POSIXct("2022-03-30") ~ 0,
         ARD_SD < 0 ~ 0,
         ARD_SD > quantile(SD, 0.99, na.rm = TRUE) ~ NA_real_,
         .default = ARD_SD
@@ -240,11 +239,30 @@ import_bound <- function() {
     select(all_of(import_names())) |>
     rename_with(~ import_renames(), .cols = all_of(import_names()))
 
-  write_csv(ot, "~/Desktop/ot_old.csv")
+  #TODO reimplement this
+  #goog = read_sheet(
+  #  "https://docs.google.com/spreadsheets/d/1A-dZsYg5leZ4hKduwx23xjWYmg7BKPQFQ0pEczrk3Rs/edit#gid=1196535705"
+  #)
 
-  ot_1 <- read_csv("~/Desktop/ot_old.csv") |> mutate(Site = as.factor(Site))
-  ot_2 <- read_csv("~/Desktop/ot_oldest.csv") |> select(-1) |> mutate(Site = as.factor(Site))
+  google_df <- read_csv("~/Desktop/field_data_responses.csv") |>
+    mutate(
+      DateTime = as.POSIXct(Timestamp, format = "%m/%d/%Y %H:%M", tz = "EST"),
+      site = Neighborhood,
+      fdep = `Average Whole Site FROST depth (mm)` / 10,
+      swe = `SWE (inches of water after snow sample melts)` * 25,
+      sdep = `Average Whole Site SNOW depth (cm)` * 10
+    ) |>
+    select(DateTime, site, fdep, swe, sdep)
 
-  full_explore_output(ot_1, "~/Desktop/ot_1.pdf")
-  full_explore_output(ot_2, "~/Desktop/ot_2.pdf")
+  combined <- ot |>
+    left_join(google_df, by = c("DateTime" = "DateTime", "Site" = "site"))
+
+  return(combined)
+  #write_csv(ot, "~/Desktop/ot_old.csv")
+
+  #ot_1 <- read_csv("~/Desktop/ot_old.csv") |> mutate(Site = as.factor(Site))
+  #ot_2 <- read_csv("~/Desktop/ot_oldest.csv") |> select(-1) |> mutate(Site = as.factor(Site))
+
+  #full_explore_output(ot_1, "~/Desktop/ot_1.pdf")
+  #full_explore_output(ot_2, "~/Desktop/ot_2.pdf")
 }
