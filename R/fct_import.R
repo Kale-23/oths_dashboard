@@ -246,7 +246,7 @@ import_bound <- function() {
 
   google_df <- read_csv("~/Desktop/field_data_responses.csv") |>
     mutate(
-      DateTime = as.POSIXct(Timestamp, format = "%m/%d/%Y %H:%M", tz = "EST"),
+      DateTime = round(as.POSIXct(Timestamp, format = "%m/%d/%Y %H:%M", tz = "EST"), "hours"), # round time to nearest hour
       site = Neighborhood,
       fdep = `Average Whole Site FROST depth (mm)` / 10,
       swe = `SWE (inches of water after snow sample melts)` * 25,
@@ -255,9 +255,8 @@ import_bound <- function() {
     select(DateTime, site, fdep, swe, sdep)
 
   combined <- ot |>
-    left_join(google_df, by = c("DateTime" = "DateTime", "Site" = "site"))
+    full_join(google_df, by = c("DateTime" = "DateTime", "Site" = "site"))
 
-  return(combined)
   #write_csv(ot, "~/Desktop/ot_old.csv")
 
   #ot_1 <- read_csv("~/Desktop/ot_old.csv") |> mutate(Site = as.factor(Site))
@@ -265,4 +264,6 @@ import_bound <- function() {
 
   #full_explore_output(ot_1, "~/Desktop/ot_1.pdf")
   #full_explore_output(ot_2, "~/Desktop/ot_2.pdf")
+
+  return(combined)
 }
