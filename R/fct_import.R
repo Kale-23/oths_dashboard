@@ -236,9 +236,32 @@ import_data <- function() {
       SpeCon_25 = EC_25_corr / (1 + 0.02 * (TSoil_25_corr - 25)),
     )
 
+  # rename columns
   ot <- ot |>
     dplyr::select(all_of(import_names())) |>
     dplyr::rename_with(~ import_renames(), .cols = all_of(import_names()))
+
+  # add ARD flag instead of seperate columns
+  non_sensor <- c("Site", "DateTime", "date", "Year", "Month", "Day", "Hour")
+  os_sensor <- colnames(ot)[startsWith(colnames(ot), "ARD_")] # ARD
+  prop_sensor <- setdiff(colnames(ot), c(non_sensor, os_sensor))
+  ot_ARD <- ot |>
+    dplyr::select(
+      dplyr::all_of(non_sensor),
+      dplyr::starts_with("ARD_")
+    ) |>
+    dplyr::rename_with(~ stringr::str_remove(., "ARD_")) |>
+    dplyr::mutate(sensor = "os")
+
+  ot <- ot |>
+    dplyr::select(
+      dplyr::all_of(non_sensor),
+      dplyr::all_of(prop_sensor)
+    ) |>
+    dplyr::mutate(sensor = "prop")
+
+  ot <- dplyr::bind_rows(ot, ot_ARD)
+  rm(non_sensor, os_sensor, prop_sensor, ot_ARD)
 
   #TODO reimplement this
   #goog = read_sheet(
@@ -250,16 +273,23 @@ import_data <- function() {
       DateTime = round(as.POSIXct(Timestamp, format = "%m/%d/%Y %H:%M", tz = "EST"), "hours"), # round time to nearest hour
       date = lubridate::as_date(DateTime, tz = "EST"),
       site = Neighborhood,
+      sensor = "google",
       fdep = `Average Whole Site FROST depth (mm)` / 10,
       swe = `SWE (inches of water after snow sample melts)` * 25,
-      sdep = `Average Whole Site SNOW depth (cm)` * 10
+      SnowDepth = `Average Whole Site SNOW depth (cm)`
     ) |>
-    dplyr::select(DateTime, date, site, fdep, swe, sdep)
+    dplyr::select(DateTime, date, site, sensor, fdep, swe, SnowDepth)
 
   combined <- ot |>
     dplyr::full_join(
       google_df,
-      by = c("DateTime" = "DateTime", "Site" = "site", "date" = "date")
+      by = c(
+        "DateTime" = "DateTime",
+        "Site" = "site",
+        "date" = "date",
+        "sensor" = "sensor",
+        "SnowDepth" = "SnowDepth"
+      )
     )
   rm(ot, google_df)
 
@@ -267,16 +297,16 @@ import_data <- function() {
   hwpheno = readr::read_csv("http://hbrsensor.sr.unh.edu/data/snownet/shiny_othshw.csv") |>
     dplyr::mutate(
       site = "HW",
-      date = lubridate::as_date(date, tz = "EST")
+      DateTime = lubridate::as_date(date, tz = "EST")
     ) |>
-    dplyr::select(date, midday_gcc, site)
+    dplyr::select(DateTime, midday_gcc, site)
 
   swpheno = readr::read_csv("http://hbrsensor.sr.unh.edu/data/snownet/shiny_othssw.csv") |>
     dplyr::mutate(
       site = "SW",
-      date = lubridate::as_date(date, tz = "EST")
+      DateTime = lubridate::as_date(date, tz = "EST")
     ) |>
-    dplyr::select(date, midday_gcc, site)
+    dplyr::select(DateTime, midday_gcc, site)
 
   pheno = dplyr::bind_rows(hwpheno, swpheno)
   rm(hwpheno, swpheno)

@@ -21,15 +21,15 @@ mod_global_ui <- function(id) {
         # date input
         shiny::uiOutput(ns("date_ui")),
         # sensor input
-        shiny::radioButtons(
+        shiny::checkboxGroupInput(
           ns("sensor_selector"),
           "Select Sensors to Include",
           choices = c(
             "Open Source (Arduino)" = "os",
             "Proprietary" = "prop",
-            "Both" = "both"
+            "Google Sheets" = "google"
           ),
-          selected = "both"
+          selected = c("os", "prop", "google"),
         ),
         # site input
         shiny::radioButtons(
@@ -41,8 +41,53 @@ mod_global_ui <- function(id) {
             "Hemlock" = "sw"
           ),
           selected = "both"
+        ),
+        # data to plot
+        shiny::checkboxGroupInput(
+          ns("plot_selector"),
+          "Select Variables to Plot",
+          choices = c(
+            "Air Temperature" = "AirT", # AirT
+            "Relative Humidity" = "RH", # RH
+            "Snow Depth" = "SnowDepth", # SnowDepth
+            #"Soil Temperature" = "sdep", # sdep
+            "Snow Water Equivalent" = "swe", # swe
+            "Frost Depth" = "fdep", # fdep
+            "Soil Temperature" = "TSoil", # TSoil_5, TSoil_25, TSoil
+            "Soil Moisture" = "VWC", # VWC_5, VWC_25, VWC
+            "Soil Specific Conductance" = "SpeCon", # SpeCon_5, SpeCon_25
+            "Phenology Greenness Index" = "gcc" # midday_gcc
+          )
+        ),
+        p(
+          "This research is supported by the National Science Foundation MacroSystems Biology
+                Grant #18027726"
         )
       ),
+
+      shiny::uiOutput(ns("AirT_plot")),
+
+      #shiny::conditionalPanel(
+      #  condition = "input.plot_selector.includes('AirT')",
+      #  dygraphs::dygraphOutput(ns("AirT_plot")),
+      #),
+      #shiny::conditionalPanel(
+      #  condition = "input.plot_selector.includes('RH')",
+      #  dygraphs::dygraphOutput(ns("RH_plot")),
+      #),
+      #shiny::conditionalPanel(
+      #  condition = "input.plot_selector.includes('SnowDepth')",
+      #  dygraphs::dygraphOutput(ns("SnowDepth_plot")),
+      #),
+      #shiny::conditionalPanel(
+      #  condition = "input.plot_selector.includes('swe')",
+      #  dygraphs::dygraphOutput(ns("swe_plot")),
+      #),
+      #shiny::conditionalPanel(
+      #  condition = "input.plot_selector.includes('gcc')",
+      #  dygraphs::dygraphOutput(ns("gcc_plot")),
+      #),
+
       DT::dataTableOutput(ns("bound_dt")),
       DT::dataTableOutput(ns("pheno_dt")),
     )
@@ -61,10 +106,10 @@ mod_global_server <- function(id, bound, pheno) {
       shiny::dateRangeInput(
         ns("date_selector"),
         "Select Date Range",
-        start = min(bound$date, pheno$date),
-        min = min(bound$date, pheno$date),
-        end = max(bound$date, pheno$date),
-        max = max(bound$date, pheno$date),
+        start = min(bound$date, pheno$DateTime),
+        min = min(bound$date, pheno$DateTime),
+        end = max(bound$date, pheno$DateTime),
+        max = max(bound$date, pheno$DateTime),
       )
     })
 
@@ -72,31 +117,16 @@ mod_global_server <- function(id, bound, pheno) {
     filtered_bound <- shiny::reactive({
       req(input$date_selector)
       req(input$sensor_selector)
+      req(input$site_selector)
 
       # sensor setup
-      #fmt: skip
-      non_sensor <- c("Site", "DateTime", "date", "Year", "Month", "Day", "Hour", "fdep", "swe", "sdep")
-      os_sensor <- colnames(bound)[startsWith(colnames(bound), "ARD_")]
-      prop_sensor <- setdiff(colnames(bound), c(non_sensor, os_sensor))
-
-      print(os_sensor)
-      print(prop_sensor)
-
       bound |>
         dplyr::filter(
           # date filter
           date >= input$date_selector[1] &
-            date <= input$date_selector[2]
-        ) |>
-        # sensor filter
-        dplyr::select(
-          if (input$sensor_selector == "os") {
-            c(non_sensor, os_sensor)
-          } else if (input$sensor_selector == "prop") {
-            c(non_sensor, prop_sensor)
-          } else {
-            dplyr::everything()
-          }
+            date <= input$date_selector[2],
+          # sensor filter
+          sensor %in% input$sensor_selector
         ) |>
         # site filter
         dplyr::filter(
@@ -114,10 +144,46 @@ mod_global_server <- function(id, bound, pheno) {
       req(input$date_selector)
       pheno |>
         dplyr::filter(
-          date >= input$date_selector[1] &
-            date <= input$date_selector[2]
+          DateTime >= input$date_selector[1] &
+            DateTime <= input$date_selector[2]
         )
     })
+
+    output$AirT_plot <- shiny::renderUI({
+      plotly::plotlyOutput(
+        plotly::renderPlotly(
+          single_col_plot(
+            filtered_bound(),
+            "AirT"
+          )
+        )
+      )
+    })
+
+    #output$AirT_plot <- dygraphs::renderDygraph(single_col_plot(
+    #   filtered_bound(),
+    #   "AirT"
+    # ))
+
+    #output$RH_plot <- dygraphs::renderDygraph(single_col_plot(
+    #  filtered_bound(),
+    #  "RH"
+    #))
+
+    #output$SnowDepth_plot <- dygraphs::renderDygraph(single_col_plot(
+    #  filtered_bound(),
+    #  "SnowDepth"
+    #))
+
+    #output$swe_plot <- dygraphs::renderDygraph(single_col_plot(
+    #  filtered_bound(),
+    #  "swe"
+    #))
+
+    #output$gcc_plot <- dygraphs::renderDygraph(single_col_plot(
+    #  filtered_pheno(),
+    #  "midday_gcc"
+    #))
 
     output$bound_dt <- DT::renderDT({
       DT::datatable(
