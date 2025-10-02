@@ -40,5 +40,6 @@ golem_add_external_resources <- function() {
     # for example, you can add shinyalert::useShinyalert()
   )
 
-  dygraph_dependency()
+  # switched to plotly
+  #dygraph_dependency()
 }

@@ -3,7 +3,7 @@
 #' @description sets up shiny output for plotly
 #'
 #' @noRd
-plotly_timeseries <- function(df, new_col_name, seasonal = FALSE) {
+plotly_timeseries <- function(df, new_col_name) {
   # Extract palette
   colors <- as.character(paletteer::paletteer_d("yarrr::info2"))
 
@@ -24,16 +24,17 @@ plotly_timeseries <- function(df, new_col_name, seasonal = FALSE) {
     colors = colors,
     type = "scatter",
     mode = "lines+markers",
-    marker = list(size = 6),
+    opacity = 0.7,
+    marker = list(size = 1),
     #fmt: skip
     text = ~ paste(
       "Location: ", series, "<br>",
       "Value: ", value
-    ),
-    connectgaps = TRUE # mainly helps with seasonal data
+    )
+    #connectgaps = TRUE
   ) |>
     plotly::layout(
-      yaxis = list(title = new_col_name), #TODO col_names_conversions()[[new_col_name]])
+      yaxis = list(title = plot_name_conversions()[[new_col_name]]),
       xaxis = list(
         title = "Date",
         type = 'date',
@@ -42,13 +43,34 @@ plotly_timeseries <- function(df, new_col_name, seasonal = FALSE) {
     )
 }
 
-prepare_plot_data <- function(data, col) {
-  data |>
-    dplyr::select(DateTime, site, value = all_of(col)) |>
-    tidyr::pivot_wider(
-      names_from = "site",
-      values_from = "value",
-      values_fn = mean
-    ) |>
-    dplyr::arrange(DateTime)
+prep_plot <- function(data, column) {
+  #TODO is this how it should be handled
+  if ("sensor" %in% colnames(data)) {
+    plot_data <- data |>
+      dplyr::summarise(n = mean(.data[[column]]), .by = c(DateTime, sensor, Site)) |>
+      tidyr::pivot_wider(
+        id_cols = DateTime,
+        names_from = c(sensor, Site),
+        values_from = n
+      ) |>
+      dplyr::select(DateTime, dplyr::matches("os|prop|google")) |>
+      dplyr::rename_with(~ gsub("os_HW", "Open Source Beech", .x)) |>
+      dplyr::rename_with(~ gsub("os_SW", "Open Source Hemlock", .x)) |>
+      dplyr::rename_with(~ gsub("prop_HW", "Proprietary Beech", .x)) |>
+      dplyr::rename_with(~ gsub("prop_SW", "Proprietary Hemlock", .x)) |>
+      dplyr::rename_with(~ gsub("google_HW", "Google Sheets Beech", .x)) |>
+      dplyr::rename_with(~ gsub("google_SW", "Google Sheets Hemlock", .x))
+  } else {
+    plot_data <- data |>
+      dplyr::summarise(n = mean(.data[[column]]), .by = c(DateTime, site)) |>
+      tidyr::pivot_wider(
+        id_cols = DateTime,
+        names_from = site,
+        values_from = n
+      ) |>
+      dplyr::rename_with(~ gsub("HW", "Beech", .x)) |>
+      dplyr::rename_with(~ gsub("SW", "Hemlock", .x))
+  }
+
+  plot_data
 }

@@ -71,7 +71,7 @@ import_renames <- function() {
   )
 }
 
-dygraph_col_name_conversions <- function() {
+plot_name_conversions <- function() {
   list(
     "AirT" = "Air Temperature (°C)",
     "RH" = "Relative Humidity (%)",
@@ -99,41 +99,6 @@ site_renames <- function() {
     "HW" = "Beech",
     "SW" = "Hemlock"
   )
-}
-
-single_col_plot <- function(data, column) {
-  #TODO is this how it should be handled
-  if ("sensor" %in% colnames(data)) {
-    plot_data <- data |>
-      dplyr::summarise(n = mean(.data[[column]]), .by = c(DateTime, sensor, Site)) |>
-      tidyr::pivot_wider(
-        id_cols = DateTime,
-        names_from = c(sensor, Site),
-        values_from = n
-      ) |>
-      dplyr::select(DateTime, dplyr::matches("os|prop|google")) |>
-      dplyr::rename_with(~ gsub("os_HW", "Open Source Beech", .x)) |>
-      dplyr::rename_with(~ gsub("os_SW", "Open Source Hemlock", .x)) |>
-      dplyr::rename_with(~ gsub("prop_HW", "Proprietary Beech", .x)) |>
-      dplyr::rename_with(~ gsub("prop_SW", "Proprietary Hemlock", .x)) |>
-      dplyr::rename_with(~ gsub("google_HW", "Google Sheets Beech", .x)) |>
-      dplyr::rename_with(~ gsub("google_SW", "Google Sheets Hemlock", .x))
-  } else {
-    plot_data <- data |>
-      dplyr::summarise(n = mean(.data[[column]]), .by = c(DateTime, site)) |>
-      tidyr::pivot_wider(
-        id_cols = DateTime,
-        names_from = site,
-        values_from = n
-      ) |>
-      dplyr::rename_with(~ gsub("HW", "Beech", .x)) |>
-      dplyr::rename_with(~ gsub("SW", "Hemlock", .x))
-  }
-
-  # return dygraph output
-  #dygraph_setup(plot_data, column)
-  plot_data <- prepare_plot_data(plot_data, column)
-  plotly_timeseries(plot_data, column)
 }
 
 ##numeric_hist <- function(df) {

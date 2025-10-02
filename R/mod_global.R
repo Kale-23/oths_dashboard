@@ -65,28 +65,7 @@ mod_global_ui <- function(id) {
         )
       ),
 
-      shiny::uiOutput(ns("AirT_plot")),
-
-      #shiny::conditionalPanel(
-      #  condition = "input.plot_selector.includes('AirT')",
-      #  dygraphs::dygraphOutput(ns("AirT_plot")),
-      #),
-      #shiny::conditionalPanel(
-      #  condition = "input.plot_selector.includes('RH')",
-      #  dygraphs::dygraphOutput(ns("RH_plot")),
-      #),
-      #shiny::conditionalPanel(
-      #  condition = "input.plot_selector.includes('SnowDepth')",
-      #  dygraphs::dygraphOutput(ns("SnowDepth_plot")),
-      #),
-      #shiny::conditionalPanel(
-      #  condition = "input.plot_selector.includes('swe')",
-      #  dygraphs::dygraphOutput(ns("swe_plot")),
-      #),
-      #shiny::conditionalPanel(
-      #  condition = "input.plot_selector.includes('gcc')",
-      #  dygraphs::dygraphOutput(ns("gcc_plot")),
-      #),
+      shiny::uiOutput(ns("bound_plots")),
 
       DT::dataTableOutput(ns("bound_dt")),
       DT::dataTableOutput(ns("pheno_dt")),
@@ -135,7 +114,7 @@ mod_global_server <- function(id, bound, pheno) {
           } else if (input$site_selector == "sw") {
             Site == "SW"
           } else {
-            TRUE
+            TRUE # no filter
           }
         )
     })
@@ -149,41 +128,43 @@ mod_global_server <- function(id, bound, pheno) {
         )
     })
 
-    output$AirT_plot <- shiny::renderUI({
-      plotly::plotlyOutput(
-        plotly::renderPlotly(
-          single_col_plot(
-            filtered_bound(),
-            "AirT"
-          )
-        )
-      )
+    bound_plot_data <- shiny::reactive({
+      req(input$plot_selector)
+      req(filtered_bound())
+
+      purrr::map(input$plot_selector, function(col) {
+        df <- prep_plot(filtered_bound(), col)
+        list(data = df, col = col)
+      })
     })
 
-    #output$AirT_plot <- dygraphs::renderDygraph(single_col_plot(
-    #   filtered_bound(),
-    #   "AirT"
-    # ))
+    output$bound_plots <- shiny::renderUI({
+      req(bound_plot_data())
+      tagList(
+        lapply(bound_plot_data(), function(df_col) {
+          df <- df_col$data
+          col <- df_col$col
+          plot_id <- paste0("plot_", col)
 
-    #output$RH_plot <- dygraphs::renderDygraph(single_col_plot(
-    #  filtered_bound(),
-    #  "RH"
-    #))
+          # create plots
+          output[[plot_id]] <- plotly::renderPlotly({
+            plotly_timeseries(df, col)
+          })
 
-    #output$SnowDepth_plot <- dygraphs::renderDygraph(single_col_plot(
-    #  filtered_bound(),
-    #  "SnowDepth"
-    #))
-
-    #output$swe_plot <- dygraphs::renderDygraph(single_col_plot(
-    #  filtered_bound(),
-    #  "swe"
-    #))
-
-    #output$gcc_plot <- dygraphs::renderDygraph(single_col_plot(
-    #  filtered_pheno(),
-    #  "midday_gcc"
-    #))
+          # show plots within card for better formatting
+          div(
+            class = "plot-container",
+            bslib::card(
+              full_screen = TRUE, # can expand to fit screen
+              bslib::card_header(
+                plot_name_conversions()[[col]]
+              ),
+              plotly::plotlyOutput(ns(plot_id)) # actual plot output
+            )
+          )
+        })
+      )
+    })
 
     output$bound_dt <- DT::renderDT({
       DT::datatable(
