@@ -13,12 +13,18 @@ mod_global_ui <- function(id) {
     bslib::layout_sidebar(
       sidebar = bslib::sidebar(
         width = 600,
-        title = "Old Town Ecological Observatory",
-        shiny::div(
-          # intro text
-          shiny::p(
-            "Visualize and download data and graphs from the Old Town Ecological Observatory, Old Town, Maine. The observatory continuously monitors near-surface climate conditions in two neighboring forest stands, beech and hemlock"
+        title = shiny::span(
+          shiny::h3(
+            "Old Town Ecological Observatory Dashboard",
           ),
+          bslib::tooltip(
+            bsicons::bs_icon("info-circle"),
+            # intro text
+            "Visualize and download data and graphs from the Old Town Ecological Observatory, Old Town, Maine. The observatory continuously monitors near-surface climate conditions in two neighboring forest stands, beech and hemlock",
+            placement = "bottom"
+          )
+        ),
+        shiny::div(
           # date input
           shiny::uiOutput(ns("date_ui")),
           # sensor input
@@ -34,7 +40,7 @@ mod_global_ui <- function(id) {
             ),
             choices = c(
               "Open Source (Arduino)" = "os",
-              "Proprietary" = "prop",
+              "Research Grade" = "prop",
               "Google Sheets" = "google"
             ),
             selected = c("os", "prop", "google"),
