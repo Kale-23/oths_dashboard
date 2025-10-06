@@ -82,7 +82,8 @@ plot_name_conversions <- function() {
     "TSoil" = "Soil Temperature (°C)",
     "VWC" = "Soil Moisture (%)",
     "SpeCon" = "Soil Specific Conductance (µS/cm)",
-    "gcc" = "Daily gcc (90th Percentile)"
+    "gcc" = "Daily gcc (90th Percentile)",
+    "midday_gcc" = "Daily gcc (90th Percentile)"
   )
 }
 

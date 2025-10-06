@@ -268,7 +268,7 @@ import_data <- function() {
 
   #TODO reimplement this
   #goog = read_sheet(
-  #  "https://docs.google.com/spreadsheets/d/1A-dZsYg5leZ4hKduwx23xjWYmg7BKPQFQ0pEczrk3Rs/edit#gid=1196535705"
+  #  "https://docs.google.com/spreadsheets/d/1a-dzsyg5lez4hkduwx23xjwymg7bkpqfq0peczrk3rs/edit#gid=1196535705"
   #)
 
   google_df <- readr::read_csv("~/Desktop/field_data_responses.csv") |>

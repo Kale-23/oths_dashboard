@@ -5,7 +5,8 @@
 #' @noRd
 plotly_timeseries <- function(df, new_col_name) {
   # Extract palette
-  colors <- as.character(paletteer::paletteer_d("yarrr::info2"))
+  #colors <- as.character(paletteer::paletteer_d("yarrr::info2"))
+  colors <- as.character(paletteer::paletteer_d("ggthemes::Classic_10"))
 
   # Convert wide data into long for Plotly
   df_long <- tidyr::pivot_longer(

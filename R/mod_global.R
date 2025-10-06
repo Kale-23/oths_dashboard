@@ -10,125 +10,135 @@
 mod_global_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    #bslib::input_dark_mode(),
-    bslib::layout_sidebar(
-      sidebar = bslib::sidebar(
-        width = 500,
-        title = bslib::tooltip(
-          shiny::span(
-            shiny::h3("Old Town Ecological Observatory Dashboard"),
-            bsicons::bs_icon("info-circle")
-          ),
-          # intro text
-          "Visualize and download data and graphs from the Old Town Ecological Observatory, Old Town, Maine. The observatory continuously monitors near-surface climate conditions in two neighboring forest stands, beech and hemlock",
-          placement = "auto"
-        ),
+    bslib::card(
+      bslib::card_header(
         shiny::div(
-          # date input
-          shiny::uiOutput(ns("date_ui")),
-          # sensor input
-          shiny::checkboxGroupInput(
-            ns("sensor_selector"),
-            shiny::span(
-              "Select Sensors to Include",
-              bslib::tooltip(
-                bsicons::bs_icon("info-circle"),
-                "Not all sensors collect all variables. If no data appears for a variable, try selecting a different sensor.",
-                placement = "right"
-              )
+          style = "display: flex; justify-content: space-between; align-items: center;",
+          shiny::span(
+            shiny::h3(
+              style = "display: inline; margin-right: 0.3em;",
+              "Old Town Ecological Observatory Dashboard"
             ),
-            choices = c(
-              "Arduino (Open Source)" = "os",
-              "Research Grade" = "prop",
-              "Volunteer (Google Sheets)" = "google"
+            bslib::tooltip(
+              bsicons::bs_icon("info-circle"),
+              # intro text
+              "Visualize and download data and graphs from the Old Town Ecological Observatory, Old Town, Maine. The observatory continuously monitors near-surface climate conditions in two neighboring forest stands, beech and hemlock",
+              placement = "auto"
             ),
-            selected = c("os", "prop", "google"),
           ),
-          # site input
-          shiny::radioButtons(
-            ns("site_selector"),
-            shiny::span(
-              "Select Site to Include",
-              bslib::tooltip(
-                bsicons::bs_icon("info-circle"),
-                "Beech (HW) and Hemlock (SW)",
-                placement = "right"
-              )
-            ),
-            choices = c(
-              "Both" = "both",
-              "Beech" = "hw",
-              "Hemlock" = "sw"
-            ),
-            selected = "both"
-          ),
-          shiny::radioButtons(
-            ns("aggregate_selector"),
-            shiny::span(
-              "Aggregate Data by",
-              bslib::tooltip(
-                bsicons::bs_icon("info-circle"),
-                "Will take the mean of all data points within the selected time period, floored. This greatly speeds up plotting for long time series. Note that this will not affect the data tables below, which will show the full date and time of each observation.",
-                placement = "right"
-              )
-            ),
-            choices = c(
-              "Do Not Aggregate" = "none",
-              "Hour" = "hour",
-              "Day" = "day",
-              "Week" = "week",
-              "Month" = "month"
-            ),
-            selected = "week"
-          ),
-          # data to plot
-          shiny::checkboxGroupInput(
-            ns("plot_selector"),
-            shiny::span(
-              "Select Variables to Plot",
-              bslib::tooltip(
-                bsicons::bs_icon("info-circle"),
-                "You can select multiple variables to plot. Each variable will be shown in its own plot. If there are multiple depths for a variable, each depth will be shown as a separate line within the same plot.",
-                placement = "right"
-              )
-            ),
-            choices = c(
-              "Air Temperature" = "AirT", # AirT
-              "Relative Humidity" = "RH", # RH
-              "Snow Depth" = "SnowDepth", # SnowDepth
-              "Snow Water Equivalent" = "swe", # swe
-              "Frost Depth" = "fdep", # fdep
-              "Soil Temperature" = "TSoil", # TSoil_5, TSoil_25, TSoil
-              "Soil Moisture" = "VWC", # VWC_5, VWC_25, VWC
-              "Soil Specific Conductance" = "SpeCon", # SpeCon_5, SpeCon_25
-              "Phenology Greenness Index" = "midday_gcc" # midday_gcc
-            ),
-            selected = c("AirT")
-          ),
-          p(
-            "This research is supported by the National Science Foundation MacroSystems Biology
-                Grant #18027726"
-          )
-        )
-      ), # end sidebar
-
-      shiny::uiOutput(ns("bound_plots")),
-      shiny::uiOutput(ns("pheno_plots")),
-      bslib::card(
-        full_screen = TRUE, # can expand to fit screen
-        bslib::card_header(
-          "Bound Sensor Data Table"
+          bslib::input_dark_mode()
         ),
-        DT::dataTableOutput(ns("bound_dt")),
-        shiny::downloadButton(ns("download_bound"), "Download Filtered Bound Data")
       ),
-      bslib::card(
-        full_screen = TRUE, # can expand to fit screen
-        bslib::card_header(
-          "Phenocam Data Table"
+      bslib::layout_sidebar(
+        sidebar = bslib::sidebar(
+          width = 500,
+          shiny::div(
+            # date input
+            shiny::uiOutput(ns("date_ui")),
+            # sensor input
+            shiny::checkboxGroupInput(
+              ns("sensor_selector"),
+              shiny::span(
+                "Select Sensors to Include",
+                bslib::tooltip(
+                  bsicons::bs_icon("info-circle"),
+                  "Not all sensors collect all variables. If no data appears for a variable, try selecting a different sensor.",
+                  placement = "right"
+                )
+              ),
+              choices = c(
+                "Arduino (Open Source)" = "os",
+                "Research Grade" = "prop",
+                "Volunteer (Google Sheets)" = "google"
+              ),
+              selected = c("os", "prop", "google"),
+            ),
+            # site input
+            shiny::radioButtons(
+              ns("site_selector"),
+              shiny::span(
+                "Select Site to Include",
+                bslib::tooltip(
+                  bsicons::bs_icon("info-circle"),
+                  "Beech (HW) and Hemlock (SW)",
+                  placement = "right"
+                )
+              ),
+              choices = c(
+                "Both" = "both",
+                "Beech" = "hw",
+                "Hemlock" = "sw"
+              ),
+              selected = "both"
+            ),
+            shiny::radioButtons(
+              ns("aggregate_selector"),
+              shiny::span(
+                "Aggregate Data by",
+                bslib::tooltip(
+                  bsicons::bs_icon("info-circle"),
+                  "Will take the mean of all data points within the selected time period, floored. This greatly speeds up plotting for long time series. Note that this will not affect the data tables below, which will show the full date and time of each observation.",
+                  placement = "right"
+                )
+              ),
+              choices = c(
+                "Do Not Aggregate" = "none",
+                "Hour" = "hour",
+                "Day" = "day",
+                "Week" = "week",
+                "Month" = "month"
+              ),
+              selected = "week"
+            ),
+            # data to plot
+            shiny::checkboxGroupInput(
+              ns("plot_selector"),
+              shiny::span(
+                "Select Variables to Plot",
+                bslib::tooltip(
+                  bsicons::bs_icon("info-circle"),
+                  "You can select multiple variables to plot. Each variable will be shown in its own plot. If there are multiple depths for a variable, each depth will be shown as a separate line within the same plot.",
+                  placement = "right"
+                )
+              ),
+              choices = c(
+                "Air Temperature" = "AirT", # AirT
+                "Relative Humidity" = "RH", # RH
+                "Snow Depth" = "SnowDepth", # SnowDepth
+                "Snow Water Equivalent" = "swe", # swe
+                "Frost Depth" = "fdep", # fdep
+                "Soil Temperature" = "TSoil", # TSoil_5, TSoil_25, TSoil
+                "Soil Moisture" = "VWC", # VWC_5, VWC_25, VWC
+                "Soil Specific Conductance" = "SpeCon", # SpeCon_5, SpeCon_25
+                "Phenology Greenness Index" = "midday_gcc" # midday_gcc
+              ),
+              selected = c("AirT")
+            ),
+            p(
+              "This research is supported by the National Science Foundation MacroSystems Biology
+                Grant #18027726"
+            )
+          )
+        ), # end sidebar
+
+        shiny::uiOutput(ns("bound_plots")),
+        shiny::uiOutput(ns("pheno_plots")),
+        bslib::card(
+          full_screen = TRUE, # can expand to fit screen
+          bslib::card_header(
+            "Bound Sensor Data Table"
+          ),
+          DT::dataTableOutput(ns("bound_dt")),
+          shiny::downloadButton(ns("download_bound"), "Download Filtered Bound Data")
         ),
-        DT::dataTableOutput(ns("pheno_dt")),
-        shiny::downloadButton(ns("download_pheno"), "Download Filtered Phenocam Data")
+        bslib::card(
+          full_screen = TRUE, # can expand to fit screen
+          bslib::card_header(
+            "Phenocam Data Table"
+          ),
+          DT::dataTableOutput(ns("pheno_dt")),
+          shiny::downloadButton(ns("download_pheno"), "Download Filtered Phenocam Data")
+        )
       )
     )
   )
