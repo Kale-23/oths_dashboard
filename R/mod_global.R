@@ -10,19 +10,18 @@
 mod_global_ui <- function(id) {
   ns <- NS(id)
   tagList(
+    #bslib::input_dark_mode(),
     bslib::layout_sidebar(
       sidebar = bslib::sidebar(
-        width = 600,
-        title = shiny::span(
-          shiny::h3(
-            "Old Town Ecological Observatory Dashboard",
+        width = 500,
+        title = bslib::tooltip(
+          shiny::span(
+            shiny::h3("Old Town Ecological Observatory Dashboard"),
+            bsicons::bs_icon("info-circle")
           ),
-          bslib::tooltip(
-            bsicons::bs_icon("info-circle"),
-            # intro text
-            "Visualize and download data and graphs from the Old Town Ecological Observatory, Old Town, Maine. The observatory continuously monitors near-surface climate conditions in two neighboring forest stands, beech and hemlock",
-            placement = "bottom"
-          )
+          # intro text
+          "Visualize and download data and graphs from the Old Town Ecological Observatory, Old Town, Maine. The observatory continuously monitors near-surface climate conditions in two neighboring forest stands, beech and hemlock",
+          placement = "auto"
         ),
         shiny::div(
           # date input
@@ -39,9 +38,9 @@ mod_global_ui <- function(id) {
               )
             ),
             choices = c(
-              "Open Source (Arduino)" = "os",
+              "Arduino (Open Source)" = "os",
               "Research Grade" = "prop",
-              "Google Sheets" = "google"
+              "Volunteer (Google Sheets)" = "google"
             ),
             selected = c("os", "prop", "google"),
           ),
@@ -74,13 +73,13 @@ mod_global_ui <- function(id) {
               )
             ),
             choices = c(
+              "Do Not Aggregate" = "none",
               "Hour" = "hour",
               "Day" = "day",
               "Week" = "week",
-              "Month" = "month",
-              "None" = "none"
+              "Month" = "month"
             ),
-            selected = "month"
+            selected = "week"
           ),
           # data to plot
           shiny::checkboxGroupInput(

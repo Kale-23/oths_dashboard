@@ -11,6 +11,7 @@ app_ui <- function(request) {
     # Your application UI logic
     #tags$head(HTML()),
     bslib::page_fluid(
+      theme = bslib::bs_theme("bslib_spacer" = "0.25rem"),
       mod_global_ui("global_1"),
     )
   )

@@ -6,8 +6,8 @@
 #'
 #' @noRd
 import_data <- function() {
-  #common = "~/Desktop/Soil_Work/OTHS\ Shiny\ App\ 2.0/"
-  common = "https://hbrsensor.sr.unh.edu/data/snownet/"
+  common = "~/Desktop/"
+  #common = "https://hbrsensor.sr.unh.edu/data/snownet/"
 
   # get column names
   col_names <- colnames(readr::read_csv(
@@ -21,6 +21,9 @@ import_data <- function() {
   sw <- import_individual(paste0(common, "OTHSSW_SOIL_MET.dat"), "SW", col_names)
 
   # old pre ardiuno
+
+  # TODO: move back whenever full data figured out
+  common = "https://hbrsensor.sr.unh.edu/data/snownet/"
   hw_old <- import_individual(paste0(common, "OTHSHW_SOIL_MET.dat.backup"), "HW", col_names)
   sw_old <- import_individual(paste0(common, "OTHSSW_SOIL_MET.dat.backup"), "SW", col_names)
 
